@@ -17,13 +17,14 @@ sample_num = 130000;
 fea_dim = 1000;
 %pos_num = zeros(1,imdb.num_classes);
 load pos_num.mat;%training feature nums with -s 512
+
 for cls_idx = 1:imdb.num_classes
     if(pos_num(cls_idx)>sample_num)
         fea_pos = zeros(fea_dim,sample_num);
     else
         fea_pos = zeros(fea_dim,pos_num(cls_idx));
     end
-    fea_pos = zeros(fea_dim,sample_num);
+   % fea_pos = zeros(fea_dim,sample_num);
     cnt = 0;
     for img_idx = 1:length(img_ids)
         im_name = img_ids{img_idx};
@@ -33,7 +34,7 @@ for cls_idx = 1:imdb.num_classes
         fea_size = size(CNN_feature);
         fea_size = fea_size(3:4);
         CNN_feature = reshape(CNN_feature, [fea_dim fea_size(1)*fea_size(2)]);
-        [x0,y0] = meshgrid(1:fea_size(1),1:fea_size(2));
+        [x0,y0] = meshgrid(1:fea_size(2),1:fea_size(1));
         
         x = (x0-1)*32+112;
         y = (y0-1)*32+112;
@@ -61,7 +62,7 @@ for cls_idx = 1:imdb.num_classes
                 y1 = max(round(obj.y1),1);
                 x2 = min(round(obj.x2),im_size(2));
                 y2 = min(round(obj.y2),im_size(1));
-                fea_idx = [fea_idx;find(x>x1 & x<x2 & y>y1 & y>y2)];
+                fea_idx = [fea_idx;find(x>x1 & x<x2 & y>y1 & y<y2)];
             end
         end
         fea_idx = unique(fea_idx);
@@ -76,8 +77,8 @@ for cls_idx = 1:imdb.num_classes
             fea_pos(:,cnt+1:cnt+length(fea_idx)) = CNN_feature(:,fea_idx);
             cnt = cnt+length(fea_idx);
         end
-        
-        % pos_num(cls_idx) = pos_num(cls_idx)+length(fea_idx);
+       
+         %pos_num(cls_idx) = pos_num(cls_idx)+length(fea_idx);
     end
     
     fea_pos = fea_pos(:,1:cnt);
@@ -89,11 +90,11 @@ end
 %pos_num
 %save('pos_num.mat','pos_num');
 %generate neg_feature
+%}
 
-
-neg_per_image = round(pos_num/length(imdb.image_ids));
+neg_per_image = round(sample_num/length(imdb.image_ids));
 neg_num = neg_per_image*length(imdb.image_ids);
-fea_neg = zeros(fdim,neg_num);
+fea_neg = zeros(fea_dim,neg_num);
 
 %for cls_idx = 1:imdb.num_classes
   %  fea_pos = zeros(fea_dim,sample_num);
@@ -106,7 +107,7 @@ fea_neg = zeros(fdim,neg_num);
      fea_size = size(CNN_feature);
      fea_size = fea_size(3:4);
      CNN_feature = reshape(CNN_feature, [fea_dim fea_size(1)*fea_size(2)]);
-    [x0,y0] = meshgrid(1:fea_size(1),1:fea_size(2));
+    [x0,y0] = meshgrid(1:fea_size(2),1:fea_size(1));
     
      x = (x0-1)*32+112;
      y = (y0-1)*32+112;
@@ -134,13 +135,13 @@ fea_neg = zeros(fdim,neg_num);
             y1 = max(round(obj.y1),1);
             x2 = min(round(obj.x2),im_size(2));
             y2 = min(round(obj.y2),im_size(1));
-            fea_idx = [fea_idx;find(x>x1 & x<x2 & y>y1 & y>y2)];
+            fea_idx = [fea_idx;find(x>x1 & x<x2 & y>y1 & y<y2)];
       
      end
-     ind = unique(ind);
+     ind = unique(fea_idx);
      ind2 = setdiff(1:fea_size(1)*fea_size(2),ind);
-     perm2 = randperm(length(idx2));
-     fea_neg(cnt+1:cnt+neg_per_image) = CNN_feature(:,ind2(perm2(1:neg_per_image)));
+     perm2 = randperm(length(ind2));
+     fea_neg(:,cnt+1:cnt+neg_per_image) = CNN_feature(:,ind2(perm2(1:neg_per_image)));
      cnt = cnt+neg_per_image;
 
     end
